@@ -2,11 +2,11 @@ import http from "k6/http";
 import { sleep } from "k6";
 
 export const options = {
-    vus: 100,
-    duration: "60s"
+    vus: 83,
+    duration: "50s"
 };
 
 export default function(){
-    const res = http.post("http://localhost:3000?uname=Cool");
+    const res = http.post("http://localhost:3000");
     sleep(1);
 }

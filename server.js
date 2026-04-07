@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import { Queue } from "bullmq";
 import db from "./db.js";
+import { nanoid } from "nanoid";
 
 const app = express();
 
@@ -13,9 +14,11 @@ const q = new Queue("db-exec");
 
 app.post("/", async function(req,res){
     try{
-        const uname = req.query.uname || "Placeholder";
+        // const uname = req.query.uname || "Placeholder";
 
-        await q.add("db-item", { item: uname });
+        const uniqueName = nanoid();
+
+        await q.add("db-item", { item: uniqueName });
         res.status(200).json({ message: "Data Added", data: uname });
     }
     catch(error){

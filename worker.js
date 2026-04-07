@@ -12,25 +12,22 @@ function attachedListenersToWorker(worker) {
   worker.on('failed', (job, err) => {
     console.log(`${job.id} has failed with ${err.message}`);
   });
+}
 
-  worker.on("drained", () => {
-    let placeholder;
+function writeAndFlush() {
+  //store the global state in a local array and empty the global state
+  const localBatch = [...batch];
+  batch = [];
 
-    if (batch.length > 0) {
-      placeholder = batch.map(function (item) {
-        return `(?)`;
-      }).join(",");
+  //return a map of "(?)" for each element then convert them to a string separated by ',' !
+  let placeholders = localBatch.map(function (item) { return "(?)"; }).join(",")
+  db.prepare(`
+  INSERT INTO test_users(name)
+  VALUES ${placeholders}
+  `).run(...localBatch);
 
-      db.prepare(`
-        INSERT INTO test_users(name)
-        VALUES ${placeholder}
-      `).run(...batch);
-
-      DBexecCounter++;
-      batch = [];
-      console.log("DB Hit Count: ", DBexecCounter);
-    }
-  })
+  DBexecCounter++;
+  console.log("Batch Count Written: ", DBexecCounter);
 }
 
 let DBexecCounter = 0;
@@ -38,24 +35,19 @@ const BATCH_SIZE = 20;
 let batch = [];
 
 const worker = new Worker("db-exec", function (job) {
-
   batch.push(job.data.item);
-  let placeholder;
 
-  if (batch.length >= BATCH_SIZE) {
-    placeholder = batch.map(function (item) {
-      return `(?)`;
-    }).join(",");
+  if (batch.length < BATCH_SIZE) return;
 
-    db.prepare(`
-      INSERT INTO test_users(name)
-      VALUES ${placeholder}
-    `).run(...batch);
+  writeAndFlush();
 
-    DBexecCounter++;
-    batch = [];
-    console.log("DB Hit Count: ", DBexecCounter);
-  }
-
-}, { connection, concurrency: 3 });
+}, { connection, concurrency: 1 });
 attachedListenersToWorker(worker);
+
+//Do a fallback flush every 5 seconds
+setInterval(() => {
+  if (batch.length > 0) {
+    console.log("Fallback Flush Triggred");
+    writeAndFlush();
+  }
+}, 5000);
