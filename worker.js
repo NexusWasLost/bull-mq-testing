@@ -37,7 +37,7 @@ function writeAndFlush() {
 }
 
 let DBexecCounter = 0;
-const BATCH_SIZE = 30;
+const BATCH_SIZE = 25;
 let batch = [];
 
 const worker = new Worker("db-exec", function (job) {
