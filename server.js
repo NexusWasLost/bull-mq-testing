@@ -14,12 +14,10 @@ const q = new Queue("db-exec");
 
 app.post("/", async function(req,res){
     try{
-        // const uname = req.query.uname || "Placeholder";
-
         const uniqueName = nanoid();
 
         await q.add("db-item", { item: uniqueName });
-        res.status(200).json({ message: "Data Added", data: uname });
+        res.status(200).json({ message: "Data Added", data: uniqueName });
     }
     catch(error){
         console.log("[ERROR]: ", error);

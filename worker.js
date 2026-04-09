@@ -5,11 +5,11 @@ import db from "./db.js";
 const connection = new IORedis({ maxRetriesPerRequest: null });
 
 function attachedListenersToWorker(worker) {
-  worker.on('completed', job => {
+  worker.on("completed", function (job) {
     console.log(`${job.id} has completed!`);
   });
 
-  worker.on('failed', (job, err) => {
+  worker.on("failed", function (job, err) {
     console.log(`${job.id} has failed with ${err.message}`);
   });
 }
@@ -19,19 +19,25 @@ function writeAndFlush() {
   const localBatch = [...batch];
   batch = [];
 
-  //return a map of "(?)" for each element then convert them to a string separated by ',' !
-  let placeholders = localBatch.map(function (item) { return "(?)"; }).join(",")
-  db.prepare(`
-  INSERT INTO test_users(name)
-  VALUES ${placeholders}
-  `).run(...localBatch);
+  try {
+    //return a map of "(?)" for each element then convert them to a string separated by ',' !
+    let placeholders = localBatch.map(function (item) { return "(?)"; }).join(",")
+    db.prepare(`
+    INSERT INTO test_users(name)
+    VALUES ${placeholders}
+    `).run(...localBatch);
+  }
+  catch (error) {
+    console.log("[WRITE AND FLUSH ERR]: ", error);
+    batch = [...localBatch, ...batch];
+  }
 
   DBexecCounter++;
   console.log("Batch Count Written: ", DBexecCounter);
 }
 
 let DBexecCounter = 0;
-const BATCH_SIZE = 20;
+const BATCH_SIZE = 30;
 let batch = [];
 
 const worker = new Worker("db-exec", function (job) {
@@ -44,10 +50,10 @@ const worker = new Worker("db-exec", function (job) {
 }, { connection, concurrency: 1 });
 attachedListenersToWorker(worker);
 
-//Do a fallback flush every 5 seconds
-setInterval(() => {
+//Do a fallback flush every 10 seconds
+setInterval(function () {
   if (batch.length > 0) {
     console.log("Fallback Flush Triggred");
     writeAndFlush();
   }
-}, 5000);
+}, 10000);
