@@ -16,15 +16,15 @@ Pre-Requisties: [Node.js](https://nodejs.org/en), [Redis](https://redis.io/), [P
 
 Postman Collection, SQLite Database and K6 script is already included in the repo
 
-`server.js` file is the entry point is an Express app.
+`server.js` file is the entry point.
 
 3 Endpoints
 
-- `\` (POST): Generates unqiue value using [nanoid](https://www.npmjs.com/package/nanoid) and pushes it to queue, picked up and executed by Worker.
+- `/` (POST): Generates unqiue value using [nanoid](https://www.npmjs.com/package/nanoid) and pushes it to queue, picked up and executed by Worker.
 
-- `\get-data` (GET): Gets the count of total number of records in the DB.
+- `/get-data` (GET): Gets the count of total number of records in the DB.
 
-- `\del-data` (DELETE): Deletes every record present in the DB.
+- `/del-data` (DELETE): Deletes every record present in the DB.
 
 Start the server using `npm run dev` and on a separate terminal run `node worker.js` to activate the worker.
 
@@ -42,6 +42,6 @@ The base test is set to 115 VUs and 60s duration.
 
 After test is finished switch to the terminal that the worker is active on and see total writes. To reset the write counter the worker is needed to be restarted.
 
-## Chaning Test Duration and VUs
+## Changing Test Duration and VUs
 
 Just open `test.js` and change VUs and duration to anything required. Save and run again !
